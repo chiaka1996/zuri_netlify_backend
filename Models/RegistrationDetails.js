@@ -5,7 +5,8 @@ const Registration = mongoose.Schema;
 const registration = new Registration({
     email : {type: String, required: true},
     password : {type: String, required: true },
-    planType: {type: String, required: true}  
+    planType: {type: String, required: true},
+    card: {type: Object, required: true}
 },
 {
     timestamps : true
