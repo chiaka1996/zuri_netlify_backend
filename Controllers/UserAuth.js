@@ -53,10 +53,10 @@ exports.sigunUpUsers = (req, res) => {
     const nameRegex = /^[a-z]+/gi;
     const numberRegex = /^[0-9]+/gi;
     const {email, password, planType, card} = req.body;
-    const {firstName, lastName, cardNumber, expirationDate, cvv} = card;
+    const {firstName, lastName, cardNumber, expirationDate, ccv} = card;
 
     if(!email||!password||!planType||!firstName||
-        !lastName||cardNumber||expirationDate||!cvv)
+        !lastName||!cardNumber||!expirationDate||!ccv)
         return res.status(400)
         .json({
             statusCode: 400,
@@ -69,14 +69,14 @@ exports.sigunUpUsers = (req, res) => {
     if(password.length < 7) {
         errorArray.push('password should be 7 or more charaters')
     }
-    if(firstName < 2 || lastName < 2 || !nameRegex.test(firstName) || !lastName.test(lastName)){
-       
+    
+    if(firstName.length < 2 || lastName.length < 2 || !nameRegex.test(lastName)){
          errorArray.push('name should be more than two alphabets');
     }
-    if(cardNumber !== 16 || !numberRegex(cardNumber)){
+    if(cardNumber.length !== 16 || !numberRegex.test(cardNumber)){
         errorArray.push('card number should be 16 numbers')
     }
-    if(cvv !== 3 || !numberRegex(cvv)){
+    if(ccv.length !== 3){
         errorArray.push('cvv should be 3 numbers')
     }
     if(errorArray.length > 0) {
@@ -100,34 +100,34 @@ exports.sigunUpUsers = (req, res) => {
                     lastName,
                      cardNumber,
                     expirationDate, 
-                    cvv 
+                    ccv 
                 }
             })
         
         userSignup.save()
         .then(() => {
-            const token = jwt.sign(
-                { userId: user._id },
-                'RANDOM_TOKEN-SECRET_NUMBER',
-                { expiresIn: '48h' }
-              );
-           userDetails.findOne({email})
-           .then(
-               (user) => {
-                res.status(200)
-                .json({
-                    statusCode: 200,
-                    message: 'user signed up successfully',
-                    payload: user,
-                    token
-                })
-               }
-           ).catch((err) => res.status(500)
-            .json({
-                statusCode: 500,
-                message: 'server error',
-                payload: err
-            }))
+            // const token = jwt.sign(
+            //     { userId: user._id },
+            //     'RANDOM_TOKEN-SECRET_NUMBER',
+            //     { expiresIn: '48h' }
+            //   );
+            
+              res.status(201).json({
+                  statusCode: 201,
+                  message: "user signedup successfully",
+                  payload: {
+                    email,
+                    planType,
+                    card: {
+                        firstName, 
+                        lastName,
+                        cardNumber,
+                        expirationDate, 
+                        ccv 
+                  }
+                }
+                  
+              })
         
         }).catch((err) => res.status(500)
         .json({
@@ -154,7 +154,7 @@ exports.loginUser = (req, res) => {
      return res.status(400)
         .json({
             statusCode: 400,
-            message: "please fill all fiels"
+            message: "please fill all fields"
         })
 
     if(!emailRegex.test(email)){
@@ -183,7 +183,7 @@ exports.loginUser = (req, res) => {
                         message: "incorrect email or password"
                     })
             
-            bcyrpt.compare(password, user.pasword)
+            bcyrpt.compare(password, user.password)
             .then(
                 (valid) => {
                     if(!valid)
@@ -203,14 +203,14 @@ exports.loginUser = (req, res) => {
                       res.status(201).json({
                           statusCode: 201,
                           message: "login successfull",
-                          user
+                          user,
+                          token
                       })
                 }
             ).catch((err) => res.status(500)
             .json({
                 statusCode: 500,
-                message: "server error",
-                payload: err
+                message: "server errors"
             })
      )
 
@@ -219,8 +219,7 @@ exports.loginUser = (req, res) => {
      ).catch((err) => res.status(500)
             .json({
                 statusCode: 500,
-                message: "server error",
-                payload: err
+                message: "server error"
             })
      )
     
