@@ -20,9 +20,9 @@ connection.once('open',(res) => {
     console.log("MongoDB connected");
 });
 
-//  const api = require('./routes.js');
+ const api = require('./routes.js');
 
-// app.use('/apis', api );
+app.use('/apis', api );
 
  const server = http.createServer(app);
 server.listen(port);
