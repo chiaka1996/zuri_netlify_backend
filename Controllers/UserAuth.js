@@ -40,20 +40,20 @@ exports.checkEmail = async (req, res) => {
         return res.status(500)
             .json({
                 statusCode: 500,
-                message: "server error, check network connection",
-                payload: err
-            })
+                message: "server error, check network connection"            })
     }
 }
 
 //signup user
-exports.sigunUpUsers = (req, res) => {
+exports.sigunUpUsers = async (req, res) => {
     const errorArray = [];
     const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/gi;
     const nameRegex = /^[a-z]+/gi;
     const numberRegex = /^[0-9]+/gi;
     const {email, password, planType, card} = req.body;
     const {firstName, lastName, cardNumber, expirationDate, ccv} = card;
+
+    try {
 
     if(!email||!password||!planType||!firstName||
         !lastName||!cardNumber||!expirationDate||!ccv)
@@ -87,63 +87,68 @@ exports.sigunUpUsers = (req, res) => {
             })
     }
 
-    //else, proceed to signup user
-    //hash the password
+    const existingEmail = await userDetails.findOne({email});
+
+    if(existingEmail)
+        return res.status(400)
+        .json({
+            statusCode: 400,
+            message: "email already in use by another user"
+        })
+
     bcyrpt.hash(password, 10).then(
         (hash) => {
-            const userSignup = new userDetails({
+
+            const userSignup = userDetails.create({
                 email,
+                planType,
                 password: hash,
+                card: {
+                firstName, 
+                lastName,
+                cardNumber,
+                expirationDate, 
+                ccv 
+            }
+            })
+
+        const token = jwt.sign({ 
+            userId: userSignup._id,
+            email
+            },
+        'RANDOM_TOKEN-SECRET_NUMBER',
+        { expiresIn: '24h' }
+             );
+
+        res.status(201).json({
+            // password: encryptedPassword
+            payload: {
+                email,
                 planType,
                 card: {
-                    firstName, 
+                    firstName,
                     lastName,
-                     cardNumber,
-                    expirationDate, 
-                    ccv 
-                }
-            })
-        
-        userSignup.save()
-        .then(() => {
-            // const token = jwt.sign(
-            //     { userId: user._id },
-            //     'RANDOM_TOKEN-SECRET_NUMBER',
-            //     { expiresIn: '48h' }
-            //   );
-            
-              res.status(201).json({
-                  statusCode: 201,
-                  message: "user signedup successfully",
-                  payload: {
-                    email,
-                    planType,
-                    card: {
-                        firstName, 
-                        lastName,
-                        cardNumber,
-                        expirationDate, 
-                        ccv 
-                  }
-                }
-                  
-              })
-        
-        }).catch((err) => res.status(500)
+                    cardNumber,
+                    expirationDate,
+                    ccv
+                },
+                token
+            },
+            message: "user saved"
+                })      
+            })        
+    }
+    catch(err){
+        return res.status(500)
         .json({
-            statusCode: 500,
-            message: 'server error',
-            payload: err
-        }))
-        }
-    ).catch((err) => res.status(500)
-    .json({
-        statusCode: 500,
-        message: 'server error',
-        payload: err
-    }))
+            err
+        })
+
+    }
+
 }
 
+    
 //Login users
 exports.loginUser = (req, res) => {
     const {email, password} = req.body;
@@ -210,7 +215,7 @@ exports.loginUser = (req, res) => {
             ).catch((err) => res.status(500)
             .json({
                 statusCode: 500,
-                message: "server errors"
+                message: err
             })
      )
 
@@ -219,8 +224,148 @@ exports.loginUser = (req, res) => {
      ).catch((err) => res.status(500)
             .json({
                 statusCode: 500,
-                message: "server error"
+                message: err
             })
      )
     
 }
+
+
+//else, proceed to signup user
+    //hash the password
+    // bcyrpt.hash(password, 10).then(
+    //     (hash) => {
+    //         const userSignup = new userDetails({
+    //             email,
+    //             password: hash,
+    //             planType,
+    //             card: {
+    //                 firstName, 
+    //                 lastName,
+    //                  cardNumber,
+    //                 expirationDate, 
+    //                 ccv 
+    //             }
+    //         })
+        
+    //     userSignup.save()
+    //     .then(() => {
+            // const token = jwt.sign(
+            //     { userId: user._id },
+            //     'RANDOM_TOKEN-SECRET_NUMBER',
+            //     { expiresIn: '48h' }
+            //   );
+            
+            //   res.status(201).json({
+//                   statusCode: 201,
+//                   message: "user signedup successfully",
+//                   payload: {
+//                     email,
+//                     planType,
+//                     card: {
+//                         firstName, 
+//                         lastName,
+//                         cardNumber,
+//                         expirationDate, 
+//                         ccv 
+//                   }
+//                 }
+                  
+//               })
+        
+//         }).catch((err) => res.status(500)
+//         .json({
+//             statusCode: 500,
+//             message: 'server error',
+//             payload: err
+//         }))
+//         }
+//     ).catch((err) => res.status(500)
+//     .json({
+//         statusCode: 500,
+//         message: 'server error',
+//         payload: err
+//     }))
+// }
+
+
+// bcyrpt.genSalt(10, (err, salt) => {
+        //     if(err)
+        // return res.status(500)
+        // .json({err})
+
+        // bcyrpt.hash(password, salt, (err, hash) => {
+        //     if(err)
+        //     return res.status(500)
+        //     .json({err}) 
+
+        //     userSignup.password = hash;
+        // })
+        // })
+
+        // await userSignup.save();
+
+        // const user = await userDetails.findOne({email})
+
+         //     const token = jwt.sign(
+    //         { 
+    //             userId: user._id,
+    //             email: user.email
+    //          },
+    //         'RANDOM_TOKEN-SECRET_NUMBER',
+    //         { expiresIn: '24h' }
+    //       );
+
+    //       res.status(201).json({
+    //         statusCode: 201,
+    //         message: "user sign up successfull",
+    //         email,
+    //         planType,
+    //         card: {
+    //             firstName, 
+    //             lastName,
+    //             cardNumber,
+    //             expirationDate, 
+    //             ccv 
+    //      },
+    //      token
+        
+    //   })
+
+    // userDetails.findOne({email}, (err, existingEmail)=>{
+    //     if(err)
+    //         return res.status(500)
+    //         .json({err})
+
+    //     if(existingEmail)
+    //     return res.status(400)
+    //     .json({
+    //         statusCode: 400,
+    //         message: "email already in use by another user"
+    //     })
+
+    //     userDetails.create({
+    //         email,
+    //         planType,
+    //         card: {
+    //             firstName, 
+    //             lastName,
+    //             cardNumber,
+    //             expirationDate, 
+    //             ccv 
+    //         }
+    //     }, (err, newUser) => {
+    //         if(err)
+    //         return res.status(500)
+    //         .json({err})
+
+    //         bcyrpt.genSalt(10, (err, salt) => {
+    //             if(err)
+    //         return res.status(500)
+    //         .json({err})
+
+
+    //         })
+    //     })
+
+    // })
