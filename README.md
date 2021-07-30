@@ -26,20 +26,11 @@ REGISTRATION API
 
 post api: https://zuri-netlify-backend.herokuapp.com/apis/register
 
-parameter: email, password, planType, card{fistName, lastName, expirationDate, cardNumber, ccv}
+parameter: email, password
 
 example of expected payload: {
     "email":"chikajunior@gmail.com",
-	"password": "1234567",
-	"planType": "basic",
-	"card": {
-		"firstName": "osuji",
-		"lastName": "Chiaka",
-		"cardNumber": "1234567890123456",
-		"expirationDate": "2/21",
-		"ccv": "551"
-		
-	}
+	"password": "1234567"
 }
 
 on successfull post request: {
@@ -50,20 +41,8 @@ on successfull post request: {
   "payload": {
   
     "email": "chikajunior@gmail.com",
-    
-    "planType": "basic",
-    
-    "card": {
-    
-      "firstName": "osuji",
-      
-      "lastName": "Chiaka",
-      
-      "cardNumber": "1234567890123456",
-      
-      "expirationDate": "2/21",
-      
-      "ccv": "551"
+   
+   token
     }
   }
 }
